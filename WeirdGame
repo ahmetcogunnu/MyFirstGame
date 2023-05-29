@@ -1,0 +1,576 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Random;
+
+public class WeirdGame extends JFrame {
+
+    private static final int WINDOW_WIDTH = 800;       // Oyun penceresinin genişliği
+    private static final int WINDOW_HEIGHT = 600;      // Oyun penceresinin yüksekliği
+    private static final int PLAYER_SIZE = 40;         // Oyuncu boyutu
+    private static final int ENEMY_SIZE = 40;          // Düşman boyutu
+    private static final int GOLD_SIZE = 20;           // Altın boyutu
+    private static final int ENEMY_SPEED = 1;          // Düşman hareket hızı
+    private static final int MAX_GOLD_COUNT = 10;      // Toplanması gereken altın sayısı
+
+    private int player1X;                             // 1. oyuncunun X konumu
+    private int player1Y;                             // 1. oyuncunun Y konumu
+    private int player2X;                             // 2. oyuncunun X konumu
+    private int player2Y;                             // 2. oyuncunun Y konumu
+    private ArrayList<Point> enemyPositions;           // Düşman konumlarını tutacak liste
+    private ArrayList<Point> goldPositions;            // Altın konumlarını tutacak liste
+    private int score;                                // Oyuncunun skoru
+    private boolean player1Smiling;                    // 1. oyuncunun gülümsemesi durumu
+    private boolean player2Smiling;                    // 2. oyuncunun gülümsemesi durumu
+
+    public WeirdGame() {
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);         // Oyun penceresi boyutunu ayarla
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Pac-Man");
+
+        addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                handleKeyPress(e);
+            }
+        });
+
+        setVisible(true);
+
+        player1X = WINDOW_WIDTH / 2 - PLAYER_SIZE;     // 1. oyuncunun başlangıç X konumu
+        player1Y = WINDOW_HEIGHT / 2 - PLAYER_SIZE;    // 1. oyuncunun başlangıç Y konumu
+        player2X = WINDOW_WIDTH / 2 + PLAYER_SIZE;     // 2. oyuncunun başlangıç X konumu
+        player2Y = WINDOW_HEIGHT / 2 + PLAYER_SIZE;    // 2. oyuncunun başlangıç Y konumu
+
+        enemyPositions = new ArrayList<>();            // Düşman konumlarını tutacak liste oluştur
+        goldPositions = new ArrayList<>();             // Altın konumlarını tutacak liste oluştur
+        initializeGold();                              // Altınları başlangıçta konumlandır
+        initializeEnemies();                           // Düşmanları başlangıçta konumlandır
+        score = 0;                                     // Skoru sıfırla
+        player1Smiling = false;                        // 1. oyuncunun gülümsemesi durumunu sıfırla
+        player2Smiling = false;                        // 2. oyuncunun gülümsemesi durumunu sıfırla
+    }
+
+    private void initializeGold() {
+        Random random = new Random();
+        for (int i = 0; i < MAX_GOLD_COUNT; i++) {
+            int goldX = random.nextInt(WINDOW_WIDTH - GOLD_SIZE);
+            int goldY = random.nextInt(WINDOW_HEIGHT - GOLD_SIZE);
+            goldPositions.add(new Point(goldX, goldY));
+        }
+    }
+
+    private void initializeEnemies() {
+        Random random = new Random();
+        for (int i = 0; i < 3; i++) {
+            int enemyX = random.nextInt(WINDOW_WIDTH - ENEMY_SIZE);
+            int enemyY = random.nextInt(WINDOW_HEIGHT - ENEMY_SIZE);
+            enemyPositions.add(new Point(enemyX, enemyY));
+        }
+    }
+
+    private void handleKeyPress(KeyEvent e) {
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_UP) {
+            player1Y -= 5;
+        } else if (keyCode == KeyEvent.VK_DOWN) {
+            player1Y += 5;
+        } else if (keyCode == KeyEvent.VK_LEFT) {
+            player1X -= 5;
+        } else if (keyCode == KeyEvent.VK_RIGHT) {
+            player1X += 5;
+        } else if (keyCode == KeyEvent.VK_W) {  // İkinci oyuncunun yukarı hareketi
+            player2Y -= 5;
+        } else if (keyCode == KeyEvent.VK_S) {  // İkinci oyuncunun aşağı hareketi
+            player2Y += 5;
+        } else if (keyCode == KeyEvent.VK_A) {  // İkinci oyuncunun sola hareketi
+            player2X -= 5;
+        } else if (keyCode == KeyEvent.VK_D) {  // İkinci oyuncunun sağa hareketi
+            player2X += 5;
+        }
+    
+        checkBoundary();       // Sınırları kontrol et
+        checkGoldCollision();  // Altınların toplanmasını kontrol et
+        checkEnemyCollision(); // Düşmanların oyunculara çarpmasını kontrol et
+        moveEnemies();
+    
+        repaint();             // Ekranı yeniden çiz
+    }
+    
+
+    private void moveEnemies() {
+    for (int i = 0; i < enemyPositions.size(); i++) {
+        Point enemyPosition = enemyPositions.get(i);
+        int dx = player1X - enemyPosition.x;
+        int dy = player1Y - enemyPosition.y;
+        int distanceToPlayer1 = (int) Math.sqrt(dx * dx + dy * dy);
+        dx = player2X - enemyPosition.x;
+        dy = player2Y - enemyPosition.y;
+        int distanceToPlayer2 = (int) Math.sqrt(dx * dx + dy * dy);
+
+        if (distanceToPlayer1 < distanceToPlayer2) {
+            if (player1X < enemyPosition.x) {
+                enemyPosition.x -= ENEMY_SPEED;
+            } else {
+                enemyPosition.x += ENEMY_SPEED;
+            }
+            if (player1Y < enemyPosition.y) {
+                enemyPosition.y -= ENEMY_SPEED;
+            } else {
+                enemyPosition.y += ENEMY_SPEED;
+            }
+        } else {
+            if (player2X < enemyPosition.x) {
+                enemyPosition.x -= ENEMY_SPEED;
+            } else {
+                enemyPosition.x += ENEMY_SPEED;
+            }
+            if (player2Y < enemyPosition.y) {
+                enemyPosition.y -= ENEMY_SPEED;
+            } else {
+                enemyPosition.y += ENEMY_SPEED;
+            }
+        }
+
+        enemyPositions.set(i, enemyPosition);
+    }
+}
+
+
+    private void checkBoundary() {
+        if (player1X < 0)
+            player1X = 0;
+        else if (player1X > WINDOW_WIDTH - PLAYER_SIZE)
+            player1X = WINDOW_WIDTH - PLAYER_SIZE;
+
+        if (player1Y < 0)
+            player1Y = 0;
+        else if (player1Y > WINDOW_HEIGHT - PLAYER_SIZE)
+            player1Y = WINDOW_HEIGHT - PLAYER_SIZE;
+
+        if (player2X < 0)
+            player2X = 0;
+        else if (player2X > WINDOW_WIDTH - PLAYER_SIZE)
+            player2X = WINDOW_WIDTH - PLAYER_SIZE;
+
+        if (player2Y < 0)
+            player2Y = 0;
+        else if (player2Y > WINDOW_HEIGHT - PLAYER_SIZE)
+            player2Y = WINDOW_HEIGHT - PLAYER_SIZE;
+    }
+
+    private void checkGoldCollision() {
+        for (int i = 0; i < goldPositions.size(); i++) {
+            Point goldPosition = goldPositions.get(i);
+            int goldX = goldPosition.x;
+            int goldY = goldPosition.y;
+
+            // Altının oyunculara çarpmasını kontrol et
+            if (Math.abs(goldX - player1X) <= PLAYER_SIZE && Math.abs(goldY - player1Y) <= PLAYER_SIZE) {
+                goldPositions.remove(i);       // Altını kaldır
+                score += 10;                   // Skoru arttır
+                player1Smiling = true;         // 1. oyuncunun gülümsemesini etkinleştir
+            }
+
+            if (Math.abs(goldX - player2X) <= PLAYER_SIZE && Math.abs(goldY - player2Y) <= PLAYER_SIZE) {
+                goldPositions.remove(i);       // Altını kaldır
+                score += 10;                   // Skoru arttır
+                player2Smiling = true;         // 2. oyuncunun gülümsemesini etkinleştir
+            }
+        }
+
+        // Altınların hepsini topladıysak tebrik mesajı ver ve oyunu yeniden başlat
+        if (goldPositions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tebrikler, kazandınız!");
+            resetGame();                      // Oyunu sıfırla
+        }
+    }
+
+    private void checkEnemyCollision() {
+        for (Point enemyPosition : enemyPositions) {
+            int enemyX = enemyPosition.x;
+            int enemyY = enemyPosition.y;
+
+            // Düşmanın 1. oyuncuya çarpmasını kontrol et
+            if (Math.abs(enemyX - player1X) <= PLAYER_SIZE && Math.abs(enemyY - player1Y) <= PLAYER_SIZE) {
+                player1X = WINDOW_WIDTH / 2 - PLAYER_SIZE;  // 1. oyuncuyu başlangıç noktasına geri yerleştir
+                player1Y = WINDOW_HEIGHT / 2 - PLAYER_SIZE;
+                player1Smiling = false;                      // 1. oyuncunun gülümsemesini kapat
+            }
+
+            // Düşmanın 2. oyuncuya çarpmasını kontrol et
+            if (Math.abs(enemyX - player2X) <= PLAYER_SIZE && Math.abs(enemyY - player2Y) <= PLAYER_SIZE) {
+                player2X = WINDOW_WIDTH / 2 + PLAYER_SIZE;  // 2. oyuncuyu başlangıç noktasına geri yerleştir
+                player2Y = WINDOW_HEIGHT / 2 + PLAYER_SIZE;
+                player2Smiling = false;                      // 2. oyuncunun gülümsemesini kapat
+            }
+        }
+    }
+
+    private void resetGame() {
+        player1X = WINDOW_WIDTH / 2 - PLAYER_SIZE;     // 1. oyuncuyu başlangıç noktasına geri yerleştir
+        player1Y = WINDOW_HEIGHT / 2 - PLAYER_SIZE;
+        player2X = WINDOW_WIDTH / 2 + PLAYER_SIZE;     // 2. oyuncuyu başlangıç noktasına geri yerleştir
+        player2Y = WINDOW_HEIGHT / 2 + PLAYER_SIZE;
+        initializeGold();                              // Altınları başlangıçta konumlandır
+        score = 0;                                     // Skoru sıfırla
+        player1Smiling = false;                        // 1. oyuncunun gülümsemesini kapat
+        player2Smiling = false;                        // 2. oyuncunun gülümsemesini kapat
+    }
+
+    public void paint(Graphics g) {
+        super.paint(g);
+        Graphics2D g2d = (Graphics2D) g;
+
+        // Arka planı yeşil renkte doldur
+        g2d.setColor(Color.GREEN.darker());
+        g2d.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Altınları çiz
+        g2d.setColor(Color.YELLOW);
+        for (Point goldPosition : goldPositions) {
+            int goldX = goldPosition.x;
+            int goldY = goldPosition.y;
+            g2d.fillOval(goldX, goldY, GOLD_SIZE, GOLD_SIZE);
+        }
+
+        // Oyuncuları çiz
+        g2d.setColor(Color.YELLOW);
+        g2d.fillArc(player1X, player1Y, PLAYER_SIZE, PLAYER_SIZE, 45, 270);
+        g2d.fillArc(player2X, player2Y, PLAYER_SIZE, PLAYER_SIZE, 45, 270);
+
+        
+        /*// Oyuncuları çiz
+g2d.setColor(Color.YELLOW);
+g2d.fillRect(player1X, player1Y, PLAYER_SIZE, PLAYER_SIZE);
+g2d.fillRect(player2X, player2Y, PLAYER_SIZE, PLAYER_SIZE);*/
+
+// Oyunculara korkunç surat çiz
+g2d.setColor(Color.BLACK);
+g2d.fillOval(player1X + PLAYER_SIZE / 4, player1Y + PLAYER_SIZE / 4, PLAYER_SIZE / 2, PLAYER_SIZE / 2);
+g2d.fillOval(player2X + PLAYER_SIZE / 4, player2Y + PLAYER_SIZE / 4, PLAYER_SIZE / 2, PLAYER_SIZE / 2);
+
+// Oyuncuların gözlerini çiz
+g2d.setColor(Color.WHITE);
+g2d.fillOval(player1X + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, player1Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+g2d.fillOval(player1X + PLAYER_SIZE / 4 + PLAYER_SIZE / 2, player1Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+g2d.fillOval(player2X + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, player2Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+g2d.fillOval(player2X + PLAYER_SIZE / 4 + PLAYER_SIZE / 2, player2Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+
+        // Düşmanları çiz
+        g2d.setColor(Color.RED);
+        for (Point enemyPosition : enemyPositions) {
+            int enemyX = enemyPosition.x;
+            int enemyY = enemyPosition.y;
+            g2d.fillOval(enemyX, enemyY, ENEMY_SIZE, ENEMY_SIZE);
+        }
+
+        // Skoru çiz
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.drawString("Score: " + score, 20, 30);
+
+        // Oyuncuların gülümsemesini çiz
+        if (player1Smiling) {
+            g2d.setColor(Color.YELLOW);
+            g2d.fillArc(player1X, player1Y, PLAYER_SIZE, PLAYER_SIZE, 0, 180);
+        }
+
+        if (player2Smiling) {
+            g2d.setColor(Color.YELLOW);
+            g2d.fillArc(player2X, player2Y, PLAYER_SIZE, PLAYER_SIZE, 0, 180);
+        }
+    }
+
+    public static void main(String[] args) {
+        new WeirdGame();
+    }
+}
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Random;
+
+public class WeirdGame extends JFrame {
+
+    private static final int WINDOW_WIDTH = 800;       // Oyun penceresinin genişliği
+    private static final int WINDOW_HEIGHT = 600;      // Oyun penceresinin yüksekliği
+    private static final int PLAYER_SIZE = 40;         // Oyuncu boyutu
+    private static final int ENEMY_SIZE = 40;          // Düşman boyutu
+    private static final int GOLD_SIZE = 20;           // Altın boyutu
+    private static final int ENEMY_SPEED = 1;          // Düşman hareket hızı
+    private static final int MAX_GOLD_COUNT = 10;      // Toplanması gereken altın sayısı
+
+    private int player1X;                             // 1. oyuncunun X konumu
+    private int player1Y;                             // 1. oyuncunun Y konumu
+    private int player2X;                             // 2. oyuncunun X konumu
+    private int player2Y;                             // 2. oyuncunun Y konumu
+    private ArrayList<Point> enemyPositions;           // Düşman konumlarını tutacak liste
+    private ArrayList<Point> goldPositions;            // Altın konumlarını tutacak liste
+    private int score;                                // Oyuncunun skoru
+    private boolean player1Smiling;                    // 1. oyuncunun gülümsemesi durumu
+    private boolean player2Smiling;                    // 2. oyuncunun gülümsemesi durumu
+
+    public WeirdGame() {
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);         // Oyun penceresi boyutunu ayarla
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Pac-Man");
+
+        addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                handleKeyPress(e);
+            }
+        });
+
+        setVisible(true);
+
+        player1X = WINDOW_WIDTH / 2 - PLAYER_SIZE;     // 1. oyuncunun başlangıç X konumu
+        player1Y = WINDOW_HEIGHT / 2 - PLAYER_SIZE;    // 1. oyuncunun başlangıç Y konumu
+        player2X = WINDOW_WIDTH / 2 + PLAYER_SIZE;     // 2. oyuncunun başlangıç X konumu
+        player2Y = WINDOW_HEIGHT / 2 + PLAYER_SIZE;    // 2. oyuncunun başlangıç Y konumu
+
+        enemyPositions = new ArrayList<>();            // Düşman konumlarını tutacak liste oluştur
+        goldPositions = new ArrayList<>();             // Altın konumlarını tutacak liste oluştur
+        initializeGold();                              // Altınları başlangıçta konumlandır
+        initializeEnemies();                           // Düşmanları başlangıçta konumlandır
+        score = 0;                                     // Skoru sıfırla
+        player1Smiling = false;                        // 1. oyuncunun gülümsemesi durumunu sıfırla
+        player2Smiling = false;                        // 2. oyuncunun gülümsemesi durumunu sıfırla
+    }
+
+    private void initializeGold() {
+        Random random = new Random();
+        for (int i = 0; i < MAX_GOLD_COUNT; i++) {
+            int goldX = random.nextInt(WINDOW_WIDTH - GOLD_SIZE);
+            int goldY = random.nextInt(WINDOW_HEIGHT - GOLD_SIZE);
+            goldPositions.add(new Point(goldX, goldY));
+        }
+    }
+
+    private void initializeEnemies() {
+        Random random = new Random();
+        for (int i = 0; i < 3; i++) {
+            int enemyX = random.nextInt(WINDOW_WIDTH - ENEMY_SIZE);
+            int enemyY = random.nextInt(WINDOW_HEIGHT - ENEMY_SIZE);
+            enemyPositions.add(new Point(enemyX, enemyY));
+        }
+    }
+
+    private void handleKeyPress(KeyEvent e) {
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_UP) {
+            player1Y -= 5;
+        } else if (keyCode == KeyEvent.VK_DOWN) {
+            player1Y += 5;
+        } else if (keyCode == KeyEvent.VK_LEFT) {
+            player1X -= 5;
+        } else if (keyCode == KeyEvent.VK_RIGHT) {
+            player1X += 5;
+        } else if (keyCode == KeyEvent.VK_W) {  // İkinci oyuncunun yukarı hareketi
+            player2Y -= 5;
+        } else if (keyCode == KeyEvent.VK_S) {  // İkinci oyuncunun aşağı hareketi
+            player2Y += 5;
+        } else if (keyCode == KeyEvent.VK_A) {  // İkinci oyuncunun sola hareketi
+            player2X -= 5;
+        } else if (keyCode == KeyEvent.VK_D) {  // İkinci oyuncunun sağa hareketi
+            player2X += 5;
+        }
+    
+        checkBoundary();       // Sınırları kontrol et
+        checkGoldCollision();  // Altınların toplanmasını kontrol et
+        checkEnemyCollision(); // Düşmanların oyunculara çarpmasını kontrol et
+        moveEnemies();
+    
+        repaint();             // Ekranı yeniden çiz
+    }
+    
+
+    private void moveEnemies() {
+    for (int i = 0; i < enemyPositions.size(); i++) {
+        Point enemyPosition = enemyPositions.get(i);
+        int dx = player1X - enemyPosition.x;
+        int dy = player1Y - enemyPosition.y;
+        int distanceToPlayer1 = (int) Math.sqrt(dx * dx + dy * dy);
+        dx = player2X - enemyPosition.x;
+        dy = player2Y - enemyPosition.y;
+        int distanceToPlayer2 = (int) Math.sqrt(dx * dx + dy * dy);
+
+        if (distanceToPlayer1 < distanceToPlayer2) {
+            if (player1X < enemyPosition.x) {
+                enemyPosition.x -= ENEMY_SPEED;
+            } else {
+                enemyPosition.x += ENEMY_SPEED;
+            }
+            if (player1Y < enemyPosition.y) {
+                enemyPosition.y -= ENEMY_SPEED;
+            } else {
+                enemyPosition.y += ENEMY_SPEED;
+            }
+        } else {
+            if (player2X < enemyPosition.x) {
+                enemyPosition.x -= ENEMY_SPEED;
+            } else {
+                enemyPosition.x += ENEMY_SPEED;
+            }
+            if (player2Y < enemyPosition.y) {
+                enemyPosition.y -= ENEMY_SPEED;
+            } else {
+                enemyPosition.y += ENEMY_SPEED;
+            }
+        }
+
+        enemyPositions.set(i, enemyPosition);
+    }
+}
+
+
+    private void checkBoundary() {
+        if (player1X < 0)
+            player1X = 0;
+        else if (player1X > WINDOW_WIDTH - PLAYER_SIZE)
+            player1X = WINDOW_WIDTH - PLAYER_SIZE;
+
+        if (player1Y < 0)
+            player1Y = 0;
+        else if (player1Y > WINDOW_HEIGHT - PLAYER_SIZE)
+            player1Y = WINDOW_HEIGHT - PLAYER_SIZE;
+
+        if (player2X < 0)
+            player2X = 0;
+        else if (player2X > WINDOW_WIDTH - PLAYER_SIZE)
+            player2X = WINDOW_WIDTH - PLAYER_SIZE;
+
+        if (player2Y < 0)
+            player2Y = 0;
+        else if (player2Y > WINDOW_HEIGHT - PLAYER_SIZE)
+            player2Y = WINDOW_HEIGHT - PLAYER_SIZE;
+    }
+
+    private void checkGoldCollision() {
+        for (int i = 0; i < goldPositions.size(); i++) {
+            Point goldPosition = goldPositions.get(i);
+            int goldX = goldPosition.x;
+            int goldY = goldPosition.y;
+
+            // Altının oyunculara çarpmasını kontrol et
+            if (Math.abs(goldX - player1X) <= PLAYER_SIZE && Math.abs(goldY - player1Y) <= PLAYER_SIZE) {
+                goldPositions.remove(i);       // Altını kaldır
+                score += 10;                   // Skoru arttır
+                player1Smiling = true;         // 1. oyuncunun gülümsemesini etkinleştir
+            }
+
+            if (Math.abs(goldX - player2X) <= PLAYER_SIZE && Math.abs(goldY - player2Y) <= PLAYER_SIZE) {
+                goldPositions.remove(i);       // Altını kaldır
+                score += 10;                   // Skoru arttır
+                player2Smiling = true;         // 2. oyuncunun gülümsemesini etkinleştir
+            }
+        }
+
+        // Altınların hepsini topladıysak tebrik mesajı ver ve oyunu yeniden başlat
+        if (goldPositions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tebrikler, kazandınız!");
+            resetGame();                      // Oyunu sıfırla
+        }
+    }
+
+    private void checkEnemyCollision() {
+        for (Point enemyPosition : enemyPositions) {
+            int enemyX = enemyPosition.x;
+            int enemyY = enemyPosition.y;
+
+            // Düşmanın 1. oyuncuya çarpmasını kontrol et
+            if (Math.abs(enemyX - player1X) <= PLAYER_SIZE && Math.abs(enemyY - player1Y) <= PLAYER_SIZE) {
+                player1X = WINDOW_WIDTH / 2 - PLAYER_SIZE;  // 1. oyuncuyu başlangıç noktasına geri yerleştir
+                player1Y = WINDOW_HEIGHT / 2 - PLAYER_SIZE;
+                player1Smiling = false;                      // 1. oyuncunun gülümsemesini kapat
+            }
+
+            // Düşmanın 2. oyuncuya çarpmasını kontrol et
+            if (Math.abs(enemyX - player2X) <= PLAYER_SIZE && Math.abs(enemyY - player2Y) <= PLAYER_SIZE) {
+                player2X = WINDOW_WIDTH / 2 + PLAYER_SIZE;  // 2. oyuncuyu başlangıç noktasına geri yerleştir
+                player2Y = WINDOW_HEIGHT / 2 + PLAYER_SIZE;
+                player2Smiling = false;                      // 2. oyuncunun gülümsemesini kapat
+            }
+        }
+    }
+
+    private void resetGame() {
+        player1X = WINDOW_WIDTH / 2 - PLAYER_SIZE;     // 1. oyuncuyu başlangıç noktasına geri yerleştir
+        player1Y = WINDOW_HEIGHT / 2 - PLAYER_SIZE;
+        player2X = WINDOW_WIDTH / 2 + PLAYER_SIZE;     // 2. oyuncuyu başlangıç noktasına geri yerleştir
+        player2Y = WINDOW_HEIGHT / 2 + PLAYER_SIZE;
+        initializeGold();                              // Altınları başlangıçta konumlandır
+        score = 0;                                     // Skoru sıfırla
+        player1Smiling = false;                        // 1. oyuncunun gülümsemesini kapat
+        player2Smiling = false;                        // 2. oyuncunun gülümsemesini kapat
+    }
+
+    public void paint(Graphics g) {
+        super.paint(g);
+        Graphics2D g2d = (Graphics2D) g;
+
+        // Arka planı yeşil renkte doldur
+        g2d.setColor(Color.GREEN.darker());
+        g2d.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        // Altınları çiz
+        g2d.setColor(Color.YELLOW);
+        for (Point goldPosition : goldPositions) {
+            int goldX = goldPosition.x;
+            int goldY = goldPosition.y;
+            g2d.fillOval(goldX, goldY, GOLD_SIZE, GOLD_SIZE);
+        }
+
+        // Oyuncuları çiz
+        g2d.setColor(Color.YELLOW);
+        g2d.fillArc(player1X, player1Y, PLAYER_SIZE, PLAYER_SIZE, 45, 270);
+        g2d.fillArc(player2X, player2Y, PLAYER_SIZE, PLAYER_SIZE, 45, 270);
+
+        
+        /*// Oyuncuları çiz
+g2d.setColor(Color.YELLOW);
+g2d.fillRect(player1X, player1Y, PLAYER_SIZE, PLAYER_SIZE);
+g2d.fillRect(player2X, player2Y, PLAYER_SIZE, PLAYER_SIZE);*/
+
+// Oyunculara korkunç surat çiz
+g2d.setColor(Color.BLACK);
+g2d.fillOval(player1X + PLAYER_SIZE / 4, player1Y + PLAYER_SIZE / 4, PLAYER_SIZE / 2, PLAYER_SIZE / 2);
+g2d.fillOval(player2X + PLAYER_SIZE / 4, player2Y + PLAYER_SIZE / 4, PLAYER_SIZE / 2, PLAYER_SIZE / 2);
+
+// Oyuncuların gözlerini çiz
+g2d.setColor(Color.WHITE);
+g2d.fillOval(player1X + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, player1Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+g2d.fillOval(player1X + PLAYER_SIZE / 4 + PLAYER_SIZE / 2, player1Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+g2d.fillOval(player2X + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, player2Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+g2d.fillOval(player2X + PLAYER_SIZE / 4 + PLAYER_SIZE / 2, player2Y + PLAYER_SIZE / 4 + PLAYER_SIZE / 8, PLAYER_SIZE / 8, PLAYER_SIZE / 8);
+
+        // Düşmanları çiz
+        g2d.setColor(Color.RED);
+        for (Point enemyPosition : enemyPositions) {
+            int enemyX = enemyPosition.x;
+            int enemyY = enemyPosition.y;
+            g2d.fillOval(enemyX, enemyY, ENEMY_SIZE, ENEMY_SIZE);
+        }
+
+        // Skoru çiz
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.drawString("Score: " + score, 20, 30);
+
+        // Oyuncuların gülümsemesini çiz
+        if (player1Smiling) {
+            g2d.setColor(Color.YELLOW);
+            g2d.fillArc(player1X, player1Y, PLAYER_SIZE, PLAYER_SIZE, 0, 180);
+        }
+
+        if (player2Smiling) {
+            g2d.setColor(Color.YELLOW);
+            g2d.fillArc(player2X, player2Y, PLAYER_SIZE, PLAYER_SIZE, 0, 180);
+        }
+    }
+
+    public static void main(String[] args) {
+        new WeirdGame();
+    }
+}
