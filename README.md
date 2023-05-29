@@ -9,7 +9,9 @@ Oyuncuların amacı altınları toplamaktır.
 Her altın toplandığında skor 10 puan artar.
 Oyuncular düşmanlara çarptıklarında oyuncular başlangıç noktalarına geri dönerler ve skor sıfırlanır.
 Tüm altınlar toplandığında oyunculara bir tebrik mesajı gösterilir ve oyun yeniden başlatılır.
+
 Oyun Kontrolleri
+
 oyuncu:
 Yukarı hareket: Yukarı Ok
 Aşağı hareket: Aşağı Ok
@@ -20,7 +22,10 @@ Yukarı hareket: W
 Aşağı hareket: S
 Sola hareket: A
 Sağa hareket: D
+
+
 Geliştirme Aşamaları
+
 Oyunun geliştirme aşamaları şu adımları içermektedir:
 
 Oyun penceresi oluşturma ve boyutlandırma.
@@ -36,12 +41,15 @@ Skoru güncelleme.
 Oyunun yeniden başlatılmasını sağlama.
 Oyun ekranını güncelleme.
 
+
 Kurulum
+
 Java Development Kit (JDK) indirin ve kurun.
 IDE (Integrated Development Environment) olarak Eclipse, IntelliJ IDEA veya NetBeans gibi bir Java IDE'si kullanabilirsiniz.
 Yeni bir Java projesi oluşturun.
 PacManGame sınıfını projenize ekleyin.
 Projenizi derleyin ve çalıştırın.
+
 
 Weird Game oyunu, sadece bir oyun gibi görünebilir, ancak daha derin bir felsefi mesajı da barındırır. Oyun, Socrates (Sokrates) karakterinin altınları toplamaya çalışırken düşmanlardan kaçma sürecinde bir özgürlük arayışını temsil eder.
 
